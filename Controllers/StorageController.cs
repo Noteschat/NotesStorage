@@ -107,7 +107,7 @@ namespace NotesStorage.Controllers
                         case NotesError.Unauthorized:
                             return StatusCode(403, new { cause = "not logged in" });
                         case NotesError.NotFound:
-                            return StatusCode(404, new { cause = "chat not found" });
+                            return StatusCode(404, new { cause = "note not found" });
                         default:
                             return StatusCode(500, new { cause = "retrieval failed" });
                     }
@@ -146,7 +146,7 @@ namespace NotesStorage.Controllers
                        case NotesError.Unauthorized:
                            return StatusCode(403, new { cause = "not logged in" });
                        case NotesError.NotFound:
-                           return StatusCode(404, new { cause = "chat not found" });
+                           return StatusCode(404, new { cause = "note not found" });
                        default:
                            return StatusCode(500, new { cause = "retrieval failed" });
                    }
