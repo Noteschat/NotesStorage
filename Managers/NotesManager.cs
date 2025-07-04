@@ -1,4 +1,6 @@
 ﻿using MongoDB.Driver;
+using System.Net;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace NotesStorage.Managers
@@ -14,8 +16,47 @@ namespace NotesStorage.Managers
             _notes = database.GetCollection<DBNote>("notes");
         }
 
-        public async Task<Either<List<Note>, NotesError>> GetAll(string chatId)
+        public HttpClient generateClient(string sessionId)
         {
+            var cookies = new CookieContainer();
+            cookies.Add(new Uri("http://localhost/"), new Cookie("sessionId", sessionId));
+            var handler = new HttpClientHandler
+            {
+                CookieContainer = cookies
+            };
+
+            return new HttpClient(handler);
+        }
+
+        public async Task<bool> checkAccessToChat(User user, string sessionId, string chatId)
+        {
+            var http = generateClient(sessionId);
+            try
+            {
+                var chatResult = await http.GetAsync($"http://localhost/api/chat/storage/{chatId}");
+                var jsonResponse = await chatResult.Content.ReadAsStringAsync();
+                var chat = JsonSerializer.Deserialize<Chat>(jsonResponse);
+
+                if (!chat.Users.Contains(user.Id))
+                {
+                    return false;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public async Task<Either<List<Note>, NotesError>> GetAll(User user, string sessionId, string chatId)
+        {
+            if (!await checkAccessToChat(user, sessionId, chatId))
+            {
+                return new Either<List<Note>, NotesError>(NotesError.Unauthorized);
+            }
+
             IAsyncCursor<DBNote> result;
             try
             {
@@ -43,8 +84,13 @@ namespace NotesStorage.Managers
             }
         }
 
-        public async Task<Either<string, NotesError>> CreateNew(string chatId, NewNoteBody body)
+        public async Task<Either<string, NotesError>> CreateNew(User user, string sessionId, string chatId, NewNoteBody body)
         {
+            if (!await checkAccessToChat(user, sessionId, chatId))
+            {
+                return new Either<string, NotesError>(NotesError.Unauthorized);
+            }
+
             try
             {
                 var id = Guid.NewGuid().ToString();
@@ -65,8 +111,13 @@ namespace NotesStorage.Managers
             }
         }
 
-        public async Task<Either<Note, NotesError>> FindOne(string chatId, string id)
+        public async Task<Either<Note, NotesError>> FindOne(User user, string sessionId, string chatId, string id)
         {
+            if (!await checkAccessToChat(user, sessionId, chatId))
+            {
+                return new Either<Note, NotesError>(NotesError.Unauthorized);
+            }
+
             IAsyncCursor<DBNote> result;
             try
             {
@@ -96,53 +147,63 @@ namespace NotesStorage.Managers
             }
         }
 
-        public async Task<Either<Note, NotesError>> ChangeOne(string chatId, string id, ChangeNoteBody body)
+        public async Task<Either<Note, NotesError>> ChangeOne(User user, string sessionId, string chatId, string id, ChangeNoteBody body)
         {
-           IAsyncCursor<DBNote> result;
-           try
-           {
-               result = await _notes.FindAsync(note => note.Id == id && note.ChatId == chatId);
-           }
-           catch
-           {
-               return new Either<Note, NotesError>(NotesError.NoDatabaseConnection);
-           }
+            if (!await checkAccessToChat(user, sessionId, chatId))
+            {
+                return new Either<Note, NotesError>(NotesError.Unauthorized);
+            }
 
-           var list = result.ToList();
-           if (list.Count > 0)
-           {
-               var note = list[0];
-               body.Name = body.Name != null && body.Name.Length > 0 ? body.Name : note.Name;
-               body.Content = body.Content != null && body.Content.Length > 0 ? body.Content : note.Content;
+            IAsyncCursor<DBNote> result;
+            try
+            {
+                result = await _notes.FindAsync(note => note.Id == id && note.ChatId == chatId);
+            }
+            catch
+            {
+                return new Either<Note, NotesError>(NotesError.NoDatabaseConnection);
+            }
 
-               UpdateDefinition<DBNote> update;
-               if (body.Name != note.Name)
-               {
-                   update = Builders<DBNote>.Update.Set("Name", body.Name);
-                   await _notes.UpdateOneAsync(note => note.Id == id && note.ChatId == chatId, update);
-               }
-               if (body.Content != note.Content)
-               {
-                   update = Builders<DBNote>.Update.Set("Content", body.Content);
-                   await _notes.UpdateOneAsync(note => note.Id == id && note.ChatId == chatId, update);
-               }
+            var list = result.ToList();
+            if (list.Count > 0)
+            {
+                var note = list[0];
+                body.Name = body.Name != null && body.Name.Length > 0 ? body.Name : note.Name;
+                body.Content = body.Content != null && body.Content.Length > 0 ? body.Content : note.Content;
 
-               return new Either<Note, NotesError>(new Note
-               {
-                   Id = note.Id,
-                   Name = body.Name,
-                   Content = body.Content,
-                   ChatId = note.ChatId
-               });
-           }
-           else
-           {
-               return new Either<Note, NotesError>(NotesError.NotFound);
-           }
+                UpdateDefinition<DBNote> update;
+                if (body.Name != note.Name)
+                {
+                    update = Builders<DBNote>.Update.Set("Name", body.Name);
+                    await _notes.UpdateOneAsync(note => note.Id == id && note.ChatId == chatId, update);
+                }
+                if (body.Content != note.Content)
+                {
+                    update = Builders<DBNote>.Update.Set("Content", body.Content);
+                    await _notes.UpdateOneAsync(note => note.Id == id && note.ChatId == chatId, update);
+                }
+
+                return new Either<Note, NotesError>(new Note
+                {
+                    Id = note.Id,
+                    Name = body.Name,
+                    Content = body.Content,
+                    ChatId = note.ChatId
+                });
+            }
+            else
+            {
+                return new Either<Note, NotesError>(NotesError.NotFound);
+            }
         }
 
-        public async Task<NotesError> DeleteOne(string chatId, string id)
+        public async Task<NotesError> DeleteOne(User user, string sessionId, string chatId, string id)
         {
+            if (!await checkAccessToChat(user, sessionId, chatId))
+            {
+                return NotesError.Unauthorized;
+            }
+
             try
             {
                 var result = await _notes.DeleteOneAsync(note => note.Id == id && note.ChatId == chatId);

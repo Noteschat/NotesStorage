@@ -23,8 +23,13 @@ namespace NotesStorage.Controllers
             {
                 return StatusCode(500, new { cause = "invalid user" });
             }
+            if (!HttpContext.Items.TryGetValue("sessionId", out var sessionIdObj) ||
+            sessionIdObj is not string sessionId)
+            {
+                return StatusCode(500, new { cause = "invalid sessionId" });
+            }
 
-            var result = await _notes.GetAll(chatId);
+            var result = await _notes.GetAll(user, sessionId, chatId);
             return result.Match<ActionResult>(
                 chats => {
                     var res = chats.Select(chat => new AllNotesResponse
@@ -57,6 +62,11 @@ namespace NotesStorage.Controllers
             {
                 return StatusCode(500, new { cause = "invalid user" });
             }
+            if (!HttpContext.Items.TryGetValue("sessionId", out var sessionIdObj) ||
+            sessionIdObj is not string sessionId)
+            {
+                return StatusCode(500, new { cause = "invalid sessionId" });
+            }
 
             string requestBody = await new StreamReader(Request.Body).ReadToEndAsync();
             NewNoteBody data;
@@ -70,7 +80,7 @@ namespace NotesStorage.Controllers
                 return StatusCode(400, new { cause = "missing properties" });
             }
 
-            var result = await _notes.CreateNew(chatId, data);
+            var result = await _notes.CreateNew(user, sessionId, chatId, data);
 
             return result.Match<ActionResult>(
                 id => StatusCode(200, new { id }),
@@ -95,8 +105,13 @@ namespace NotesStorage.Controllers
             {
                 return StatusCode(500, new { cause = "invalid user" });
             }
+            if (!HttpContext.Items.TryGetValue("sessionId", out var sessionIdObj) ||
+            sessionIdObj is not string sessionId)
+            {
+                return StatusCode(500, new { cause = "invalid sessionId" });
+            }
 
-            var result = await _notes.FindOne(chatId, id);
+            var result = await _notes.FindOne(user, sessionId, chatId, id);
 
             return result.Match(
                 note => StatusCode(200, note),
@@ -118,11 +133,16 @@ namespace NotesStorage.Controllers
         [HttpPut("{chatId}/{id}")]
         public async Task<dynamic> ChangeNote(string chatId, string id)
         {
-           if (!HttpContext.Items.TryGetValue("user", out var userObj) ||
-           userObj is not User user)
-           {
-               return StatusCode(500, new { cause = "invalid user" });
-           }
+            if (!HttpContext.Items.TryGetValue("user", out var userObj) ||
+            userObj is not User user)
+            {
+                return StatusCode(500, new { cause = "invalid user" });
+            }
+            if (!HttpContext.Items.TryGetValue("sessionId", out var sessionIdObj) ||
+            sessionIdObj is not string sessionId)
+            {
+                return StatusCode(500, new { cause = "invalid sessionId" });
+            }
 
            string requestBody = await new StreamReader(Request.Body).ReadToEndAsync();
            ChangeNoteBody data;
@@ -136,7 +156,7 @@ namespace NotesStorage.Controllers
                return StatusCode(400, new { cause = "wrong format" });
            }
 
-           var result = await _notes.ChangeOne(chatId, id, data);
+           var result = await _notes.ChangeOne(user, sessionId, chatId, id, data);
            return result.Match(
                chat => StatusCode(200, chat),
                error =>
@@ -162,8 +182,13 @@ namespace NotesStorage.Controllers
             {
                 return StatusCode(500, new { cause = "invalid user" });
             }
+            if (!HttpContext.Items.TryGetValue("sessionId", out var sessionIdObj) ||
+            sessionIdObj is not string sessionId)
+            {
+                return StatusCode(500, new { cause = "invalid sessionId" });
+            }
 
-            switch (await _notes.DeleteOne(chatId, id))
+            switch (await _notes.DeleteOne(user, sessionId, chatId, id))
             {
                 case NotesError.None:
                     return StatusCode(200);

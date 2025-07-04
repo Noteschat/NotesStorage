@@ -63,6 +63,8 @@ namespace NotesStorage.Middlewares
                 context.Items["user"] = cacheEntry.Success;
             }
 
+            context.Items["sessionId"] = sessionId;
+
             // Forward the request to the next middleware
             await _next(context);
         }
