@@ -1,38 +1,44 @@
 @NotesStorage_HostAddress = http://localhost/api/notes
 
 ###
-GET {{NotesStorage_HostAddress}}/storage/77c348d4-bebd-472f-81f7-9123b149ed79
+GET {{NotesStorage_HostAddress}}/storage/d717a95d-0ffe-4a1a-9944-0800b8cecaef
 Accept: application/json
-Cookie: sessionId=79483aec-ccb4-4e12-b26e-4e5c09d0c0b7
+Cookie: sessionId=9fa78a45-2f37-4b18-a065-6137115b4370
 
 ###
-POST {{NotesStorage_HostAddress}}/storage/77c348d4-bebd-472f-81f7-9123b149ed79
+POST {{NotesStorage_HostAddress}}/storage/d717a95d-0ffe-4a1a-9944-0800b8cecaef
 Accept: application/json
-Cookie: sessionId=79483aec-ccb4-4e12-b26e-4e5c09d0c0b7
+Cookie: sessionId=9fa78a45-2f37-4b18-a065-6137115b4370
 Content-Type: application/json
 
 {
     "name": "My first test note",
-    "content": "This is the content of my first test note. In the future the first content will be the selected message."
+    "content": "This is the content of my first test note. In the future the first content will be the selected message.",
+    "tags": [
+        "test"
+    ]
 }
 
 ###
-GET {{NotesStorage_HostAddress}}/storage/77c348d4-bebd-472f-81f7-9123b149ed79/822f44ca-33fe-4b59-843f-2daca9410bc0
+GET {{NotesStorage_HostAddress}}/storage/d717a95d-0ffe-4a1a-9944-0800b8cecaef/97c7011c-d1bd-4dd8-b088-e8d9b76851d3
 Accept: application/json
-Cookie: sessionId=79483aec-ccb4-4e12-b26e-4e5c09d0c0b7
+Cookie: sessionId=9fa78a45-2f37-4b18-a065-6137115b4370
 
 ###
-PUT {{NotesStorage_HostAddress}}/storage/77c348d4-bebd-472f-81f7-9123b149ed79/822f44ca-33fe-4b59-843f-2daca9410bc0
+PUT {{NotesStorage_HostAddress}}/storage/d717a95d-0ffe-4a1a-9944-0800b8cecaef/97c7011c-d1bd-4dd8-b088-e8d9b76851d3
 Accept: application/json
-Cookie: sessionId=79483aec-ccb4-4e12-b26e-4e5c09d0c0b7
+Cookie: sessionId=9fa78a45-2f37-4b18-a065-6137115b4370
 Content-Type: application/json
 
 {
     "name": "My first changed test note",
-    "content": "This is the content of my first changed test note. In the future this will be an edit of the original message."
+    "content": "This is the content of my first changed test note. In the future this will be an edit of the original message.",
+    "tags": [
+        "test"
+    ]
 }
 
 ###
-DELETE {{NotesStorage_HostAddress}}/storage/77c348d4-bebd-472f-81f7-9123b149ed79/822f44ca-33fe-4b59-843f-2daca9410bc0
+DELETE {{NotesStorage_HostAddress}}/storage/d717a95d-0ffe-4a1a-9944-0800b8cecaef/97c7011c-d1bd-4dd8-b088-e8d9b76851d3
 Accept: application/json
-Cookie: sessionId=79483aec-ccb4-4e12-b26e-4e5c09d0c0b7
+Cookie: sessionId=9fa78a45-2f37-4b18-a065-6137115b4370

@@ -74,7 +74,8 @@ namespace NotesStorage.Managers
                     Id = note.Id,
                     Name = note.Name,
                     ChatId = note.ChatId,
-                    Content = note.Content
+                    Content = note.Content,
+                    Tags = note.Tags
                 }).ToList();
                 return new Either<List<Note>, NotesError>(list);
             }
@@ -137,7 +138,8 @@ namespace NotesStorage.Managers
                     Id = list[0].Id,
                     Name = list[0].Name,
                     ChatId = list[0].ChatId,
-                    Content = list[0].Content
+                    Content = list[0].Content,
+                    Tags = list[0].Tags
                 };
                 return new Either<Note, NotesError>(note);
             }
@@ -182,13 +184,19 @@ namespace NotesStorage.Managers
                     update = Builders<DBNote>.Update.Set("Content", body.Content);
                     await _notes.UpdateOneAsync(note => note.Id == id && note.ChatId == chatId, update);
                 }
+                if (body.Tags != note.Tags)
+                {
+                    update = Builders<DBNote>.Update.Set("Tags", body.Tags);
+                    await _notes.UpdateOneAsync(note => note.Id == id && note.ChatId == chatId, update);
+                }
 
                 return new Either<Note, NotesError>(new Note
                 {
                     Id = note.Id,
                     Name = body.Name,
                     Content = body.Content,
-                    ChatId = note.ChatId
+                    ChatId = note.ChatId,
+                    Tags = note.Tags
                 });
             }
             else
@@ -226,6 +234,8 @@ namespace NotesStorage.Managers
         public string Name { get; set; }
         [JsonPropertyName("content")]
         public string Content { get; set; }
+        [JsonPropertyName("tags")]
+        public List<string>? Tags { get; set; }
     }
 
     public struct Note
@@ -238,6 +248,8 @@ namespace NotesStorage.Managers
         public string Name { get; set; }
         [JsonPropertyName("content")]
         public string Content { get; set; }
+        [JsonPropertyName("tags")]
+        public List<string>? Tags { get; set; }
     }
 
     public struct AllNotesResponse
@@ -254,6 +266,8 @@ namespace NotesStorage.Managers
         public string Name { get; set; }
         [JsonPropertyName("content")]
         public string Content { get; set; }
+        [JsonPropertyName("tags")]
+        public List<string> Tags { get; set; }
     }
 
     public struct ChangeNoteBody
@@ -262,6 +276,8 @@ namespace NotesStorage.Managers
         public string Name { get; set; }
         [JsonPropertyName("content")]
         public string Content { get; set; }
+        [JsonPropertyName("tags")]
+        public List<string> Tags { get; set; }
     }
 
     public enum NotesError
