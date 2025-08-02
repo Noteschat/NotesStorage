@@ -81,6 +81,10 @@ namespace NotesStorage.Managers
                 List<string> tags = new List<string>();
                 foreach (DBNote note in resList)
                 {
+                    if (note.Tags == null)
+                    {
+                        continue;
+                    }
                     foreach (string tag in note.Tags)
                     {
                         if (!tags.Contains(tag))
