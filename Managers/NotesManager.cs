@@ -50,11 +50,11 @@ namespace NotesStorage.Managers
             return true;
         }
 
-        public async Task<Either<List<Note>, NotesError>> GetAll(User user, string sessionId, string chatId)
+        public async Task<Either<AllNotesResult, NotesError>> GetAll(User user, string sessionId, string chatId)
         {
             if (!await checkAccessToChat(user, sessionId, chatId))
             {
-                return new Either<List<Note>, NotesError>(NotesError.Unauthorized);
+                return new Either<AllNotesResult, NotesError>(NotesError.Unauthorized);
             }
 
             IAsyncCursor<DBNote> result;
@@ -64,12 +64,13 @@ namespace NotesStorage.Managers
             }
             catch
             {
-                return new Either<List<Note>, NotesError>(NotesError.NoDatabaseConnection);
+                return new Either<AllNotesResult, NotesError>(NotesError.NoDatabaseConnection);
             }
 
             try
             {
-                var list = result.ToList().Select(note => new Note
+                var resList = result.ToList();
+                var list = resList.Select(note => new Note
                 {
                     Id = note.Id,
                     Name = note.Name,
@@ -77,11 +78,26 @@ namespace NotesStorage.Managers
                     Content = note.Content,
                     Tags = note.Tags
                 }).ToList();
-                return new Either<List<Note>, NotesError>(list);
+                List<string> tags = new List<string>();
+                foreach (DBNote note in resList)
+                {
+                    foreach (string tag in note.Tags)
+                    {
+                        if (!tags.Contains(tag))
+                        {
+                            tags.Add(tag);
+                        }
+                    }
+                }
+                return new Either<AllNotesResult, NotesError>(new AllNotesResult
+                {
+                    Notes = list,
+                    Tags = tags
+                });
             }
             catch
             {
-                return new Either<List<Note>, NotesError>(NotesError.WrongFormatInDatabase);
+                return new Either<AllNotesResult, NotesError>(NotesError.WrongFormatInDatabase);
             }
         }
 
@@ -276,6 +292,14 @@ namespace NotesStorage.Managers
         public string Name { get; set; }
         [JsonPropertyName("content")]
         public string Content { get; set; }
+        [JsonPropertyName("tags")]
+        public List<string> Tags { get; set; }
+    }
+
+    public struct AllNotesResult
+    {
+        [JsonPropertyName("notes")]
+        public List<Note> Notes { get; set; }
         [JsonPropertyName("tags")]
         public List<string> Tags { get; set; }
     }

@@ -31,13 +31,14 @@ namespace NotesStorage.Controllers
 
             var result = await _notes.GetAll(user, sessionId, chatId);
             return result.Match<ActionResult>(
-                chats => {
-                    var res = chats.Select(chat => new AllNotesResponse
+                notes =>
+                {
+                    var res = notes.Notes.Select(note => new AllNotesResponse
                     {
-                        Id = chat.Id,
-                        Name = chat.Name,
+                        Id = note.Id,
+                        Name = note.Name,
                     }).ToList();
-                    return StatusCode(200, new { notes = res });
+                    return StatusCode(200, new { notes = res, tags = notes.Tags });
                 },
                 error =>
                 {
@@ -144,34 +145,34 @@ namespace NotesStorage.Controllers
                 return StatusCode(500, new { cause = "invalid sessionId" });
             }
 
-           string requestBody = await new StreamReader(Request.Body).ReadToEndAsync();
-           ChangeNoteBody data;
+            string requestBody = await new StreamReader(Request.Body).ReadToEndAsync();
+            ChangeNoteBody data;
 
-           try
-           {
-               data = JsonSerializer.Deserialize<ChangeNoteBody>(requestBody);
-           }
-           catch
-           {
-               return StatusCode(400, new { cause = "wrong format" });
-           }
+            try
+            {
+                data = JsonSerializer.Deserialize<ChangeNoteBody>(requestBody);
+            }
+            catch
+            {
+                return StatusCode(400, new { cause = "wrong format" });
+            }
 
-           var result = await _notes.ChangeOne(user, sessionId, chatId, id, data);
-           return result.Match(
-               chat => StatusCode(200, chat),
-               error =>
-               {
-                   switch (error)
-                   {
-                       case NotesError.Unauthorized:
-                           return StatusCode(403, new { cause = "not logged in" });
-                       case NotesError.NotFound:
-                           return StatusCode(404, new { cause = "note not found" });
-                       default:
-                           return StatusCode(500, new { cause = "retrieval failed" });
-                   }
-               }
-           );
+            var result = await _notes.ChangeOne(user, sessionId, chatId, id, data);
+            return result.Match(
+                chat => StatusCode(200, chat),
+                error =>
+                {
+                    switch (error)
+                    {
+                        case NotesError.Unauthorized:
+                            return StatusCode(403, new { cause = "not logged in" });
+                        case NotesError.NotFound:
+                            return StatusCode(404, new { cause = "note not found" });
+                        default:
+                            return StatusCode(500, new { cause = "retrieval failed" });
+                    }
+                }
+            );
         }
 
         [HttpDelete("{chatId}/{id}")]
