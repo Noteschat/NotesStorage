@@ -278,6 +278,8 @@ namespace NotesStorage.Managers
         public string Id { get; set; }
         [JsonPropertyName("name")]
         public string Name { get; set; }
+        [JsonPropertyName("tags")]
+        public List<string> Tags { get; set; }
     }
 
     public struct NewNoteBody

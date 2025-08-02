@@ -37,6 +37,7 @@ namespace NotesStorage.Controllers
                     {
                         Id = note.Id,
                         Name = note.Name,
+                        Tags = note.Tags
                     }).ToList();
                     return StatusCode(200, new { notes = res, tags = notes.Tags });
                 },
